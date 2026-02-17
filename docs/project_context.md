@@ -1,10 +1,10 @@
 # 프로젝트 컨텍스트 (Project Context)
 
 ## 프로젝트 개요
-- **목표**: IDE 및 LLM에 독립적인 개발 연속성 시스템 구축.
+- **목표**: UpNote의 한계를 넘는 개인용 AI 클라우드 MD 노트 시스템 구축.
 - **핵심 가치**:
-    - IDE 간 호환성 (VS Code, Antigravity 등)
-    - LLM 간 호환성 (GPT, Claude, Gemini 등)
-    - 세션 리셋 시에도 연속성 유지
-    - GitHub를 단일 진실 공급원(Single Source of Truth)으로 사용
-    - 채팅 기록에 의존하지 않는 컨텍스트 관리
+    - **로컬 AI 자동화**: M1 맥북 및 Ollama를 활용한 노트 자동 분류 및 요약.
+    - **연속성 유지**: IDE, LLM, 세션에 관계없는 개발 흐름 유지.
+    - **Obsidian 기반**: 로컬 마크다운 파일과 Obsidian을 뷰어로 활용.
+    - **GitHub 중심**: Git을 단일 진실 공급원(SSOT)으로 사용.
+    - **플랫폼 호환성**: 맥/윈도우 간 이미지 경로 등 호환성 확보.

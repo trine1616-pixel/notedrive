@@ -13,11 +13,12 @@ def get_git_info():
 
 def update_handoff():
     branch, commit, files = get_git_info()
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now_full = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now_short = datetime.now().strftime("%y%m%d_%H%M%S")
     
-    handoff_path = os.path.join('docs', 'handoff.md')
+    handoff_path = os.path.join('docs', 'handoffs', f'handoff_{now_short}.md')
     
-    content = f"""# 핸드오프 (Handoff) - {now}
+    content = f"""# 핸드오프 (Handoff) - {now_full}
 
 ## 연속성 정보 (Continuity Context)
 - **작업 브랜치**: `{branch}`

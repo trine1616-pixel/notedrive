@@ -1,0 +1,15 @@
+# Obsidian Vault & Reference Data
+Obsidian_Vault/
+ref_upnote/
+
+# Python Virtual Environment
+venv/
+__pycache__/
+*.pyc
+
+# OS generated files
+.DS_Store
+
+# Hidden files and folders
+.env
+.gemini/
