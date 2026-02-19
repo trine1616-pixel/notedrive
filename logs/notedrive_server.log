@@ -1,0 +1,165 @@
+[2026-02-19T18:14:05.375Z] BUILD: clean + npm run build
+
+> nextn@0.1.0 build
+> NODE_ENV=production next build
+
+   ▲ Next.js 15.5.9
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 8.9s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                     234 kB         346 kB
+├ ○ /_not-found                            992 B         102 kB
+└ ƒ /api/assets/[file]                     123 B         102 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/255-99e1d6b668e20fa1.js       45.4 kB
+  ├ chunks/4bd1b696-21f374d1156f834a.js  54.2 kB
+  └ other shared chunks (total)          1.84 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.153:9002
+
+ ✓ Starting...
+ ✓ Ready in 352ms
+Stopping existing process on :9002 (72074)
+[2026-02-19T18:15:12.717Z] BUILD: clean + npm run build
+
+> nextn@0.1.0 build
+> NODE_ENV=production next build
+
+   ▲ Next.js 15.5.9
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 8.7s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                     234 kB         346 kB
+├ ○ /_not-found                            992 B         102 kB
+└ ƒ /api/assets/[file]                     123 B         102 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/255-99e1d6b668e20fa1.js       45.4 kB
+  ├ chunks/4bd1b696-21f374d1156f834a.js  54.2 kB
+  └ other shared chunks (total)          1.84 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.153:9002
+
+ ✓ Starting...
+ ✓ Ready in 363ms
+[Error: Failed to find Server Action "40be4f1e42a26bc3fd82960d0dd7f53bb8022b27f5". This request might be from an older or newer deployment.
+Read more: https://nextjs.org/docs/messages/failed-to-find-server-action]
+[Error: Failed to find Server Action "40be4f1e42a26bc3fd82960d0dd7f53bb8022b27f5". This request might be from an older or newer deployment.
+Read more: https://nextjs.org/docs/messages/failed-to-find-server-action]
+[Error: Failed to find Server Action "40be4f1e42a26bc3fd82960d0dd7f53bb8022b27f5". This request might be from an older or newer deployment.
+Read more: https://nextjs.org/docs/messages/failed-to-find-server-action]
+Stopping existing process on :9002 (72437)
+[2026-02-19T18:18:17.799Z] BUILD: clean + npm run build
+
+> nextn@0.1.0 build
+> NODE_ENV=production next build
+
+   ▲ Next.js 15.5.9
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 8.5s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                     233 kB         346 kB
+├ ○ /_not-found                            992 B         102 kB
+└ ƒ /api/assets/[file]                     123 B         102 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/255-99e1d6b668e20fa1.js       45.4 kB
+  ├ chunks/4bd1b696-21f374d1156f834a.js  54.2 kB
+  └ other shared chunks (total)          1.84 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.153:9002
+
+ ✓ Starting...
+ ✓ Ready in 342ms
+Stopping existing process on :9002 (73587)
+[2026-02-19T18:23:35.211Z] BUILD: clean + npm run build
+
+> nextn@0.1.0 build
+> NODE_ENV=production next build
+
+   ▲ Next.js 15.5.9
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 8.7s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                     233 kB         346 kB
+├ ○ /_not-found                            992 B         102 kB
+└ ƒ /api/assets/[file]                     123 B         102 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/255-99e1d6b668e20fa1.js       45.4 kB
+  ├ chunks/4bd1b696-21f374d1156f834a.js  54.2 kB
+  └ other shared chunks (total)          1.84 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.153:9002
+
+ ✓ Starting...
+ ✓ Ready in 369ms

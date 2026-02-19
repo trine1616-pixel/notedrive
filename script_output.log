@@ -1,0 +1,69 @@
+🚀 Starting NoteDrive on port 9002...
+Waiting for server to start...
+
+> nextn@0.1.0 dev
+> next dev --turbopack -p 9002 -p 9002
+
+Connection to localhost port 9002 [tcp/dynamid] succeeded!
+✅ Server is ready!
+   ▲ Next.js 15.5.9 (Turbopack)
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.153:9002
+
+ ✓ Starting...
+ ✓ Ready in 943ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.4s
+ GET / 200 in 4335ms
+ ✓ Compiled /favicon.ico in 201ms
+ GET /favicon.ico?favicon.7ed73651.ico 200 in 468ms
+Summarization failed: Error [GenkitError]: FAILED_PRECONDITION: Please pass in the API key or set the GEMINI_API_KEY or GOOGLE_API_KEY environment variable.
+For more details see https://genkit.dev/docs/plugins/google-genai/
+    at __TURBOPACK__module__evaluation__ (src/ai/genkit.ts:2:1)
+    at __TURBOPACK__module__evaluation__ (src/ai/flows/summarize-note-flow.ts:10:1)
+    at __TURBOPACK__module__evaluation__ (src/app/actions.ts:3:1)
+    at __TURBOPACK__module__evaluation__ (.next-internal/server/app/page/actions.js (server actions loader):1:1)
+    at __TURBOPACK__module__evaluation__ (.next/server/chunks/ssr/[root-of-the-server]__f91d8753._.js:382:478)
+    at Object.<anonymous> (.next/server/app/page.js:36:3)
+  1 | import {genkit} from 'genkit';
+> 2 | import {googleAI} from '@genkit-ai/google-genai';
+    | ^
+  3 |
+  4 | export const ai = genkit({
+  5 |   plugins: [googleAI()], {
+  source: undefined,
+  status: 'FAILED_PRECONDITION',
+  detail: undefined,
+  code: 400,
+  originalMessage: 'Please pass in the API key or set the GEMINI_API_KEY or GOOGLE_API_KEY environment variable.\n' +
+    'For more details see https://genkit.dev/docs/plugins/google-genai/',
+  ignoreFailedSpan: true,
+  traceId: '6fd7fc4e6c24cbb9ce846b9ad84f68f5'
+}
+ POST / 200 in 139ms
+Summarization failed: Error [GenkitError]: FAILED_PRECONDITION: Please pass in the API key or set the GEMINI_API_KEY or GOOGLE_API_KEY environment variable.
+For more details see https://genkit.dev/docs/plugins/google-genai/
+    at __TURBOPACK__module__evaluation__ (src/ai/genkit.ts:2:1)
+    at __TURBOPACK__module__evaluation__ (src/ai/flows/summarize-note-flow.ts:10:1)
+    at __TURBOPACK__module__evaluation__ (src/app/actions.ts:3:1)
+    at __TURBOPACK__module__evaluation__ (.next-internal/server/app/page/actions.js (server actions loader):1:1)
+    at __TURBOPACK__module__evaluation__ (.next/server/chunks/ssr/[root-of-the-server]__f91d8753._.js:382:478)
+    at Object.<anonymous> (.next/server/app/page.js:36:3)
+  1 | import {genkit} from 'genkit';
+> 2 | import {googleAI} from '@genkit-ai/google-genai';
+    | ^
+  3 |
+  4 | export const ai = genkit({
+  5 |   plugins: [googleAI()], {
+  source: undefined,
+  status: 'FAILED_PRECONDITION',
+  detail: undefined,
+  code: 400,
+  originalMessage: 'Please pass in the API key or set the GEMINI_API_KEY or GOOGLE_API_KEY environment variable.\n' +
+    'For more details see https://genkit.dev/docs/plugins/google-genai/',
+  ignoreFailedSpan: true,
+  traceId: '4f0ff3a44378902183fdb91fbe9046fc'
+}
+ POST / 200 in 79ms
+./run_notedrive.sh: line 46: stall: command not found
+❌ Error: npm install failed.

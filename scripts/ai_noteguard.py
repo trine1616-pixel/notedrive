@@ -78,7 +78,20 @@ class NoteHandler(FileSystemEventHandler):
                     f.write(final_content)
 
                 # 3. 자동 이동
-                suggested_subfolder = ai_data.get('suggested_folder', '_InBox')
+                suggested_subfolder = ai_data.get('suggested_folder', '00_Inbox')
+                
+                # 카테고리 이름 일원화 (복수형)
+                folder_mapping = {
+                    "01_Project": "01_Projects",
+                    "02_Area": "02_Areas",
+                    "03_Resource": "03_Resources",
+                    "99_Archive": "04_Archives"
+                }
+                for old, new in folder_mapping.items():
+                    if old in suggested_subfolder:
+                        suggested_subfolder = suggested_subfolder.replace(old, new)
+                        break
+
                 target_dir = os.path.join(VAULT_ROOT, suggested_subfolder)
                 
                 if not os.path.exists(target_dir):
