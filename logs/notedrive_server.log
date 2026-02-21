@@ -163,3 +163,83 @@ Route (app)                                 Size  First Load JS
 
  ✓ Starting...
  ✓ Ready in 369ms
+Stopping existing process on :9002 (77231)
+[2026-02-19T18:29:37.987Z] BUILD: clean + npm run build
+
+> nextn@0.1.0 build
+> NODE_ENV=production next build
+
+   ▲ Next.js 15.5.9
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 9.1s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                     233 kB         346 kB
+├ ○ /_not-found                            992 B         102 kB
+└ ƒ /api/assets/[file]                     123 B         102 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/255-99e1d6b668e20fa1.js       45.4 kB
+  ├ chunks/4bd1b696-21f374d1156f834a.js  54.2 kB
+  └ other shared chunks (total)          1.84 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.153:9002
+
+ ✓ Starting...
+ ✓ Ready in 348ms
+Stopping existing process on :9002 (79462)
+[2026-02-19T18:44:23.279Z] BUILD: clean + npm run build
+
+> nextn@0.1.0 build
+> NODE_ENV=production next build
+
+   ▲ Next.js 15.5.9
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 8.9s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                     234 kB         347 kB
+├ ○ /_not-found                            992 B         102 kB
+└ ƒ /api/assets/[file]                     123 B         102 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/255-99e1d6b668e20fa1.js       45.4 kB
+  ├ chunks/4bd1b696-21f374d1156f834a.js  54.2 kB
+  └ other shared chunks (total)          1.84 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:9002
+   - Network:      http://192.168.0.153:9002
+
+ ✓ Starting...
+ ✓ Ready in 356ms

@@ -2,14 +2,46 @@
 Obsidian_Vault/
 ref_upnote/
 
+# NoteDrive App & Build
+notedrive/.next/
+notedrive/node_modules/
+notedrive/out/
+notedrive/build/
+NoteDrive.app/
+
+# Logs & Runtime
+logs/
+*.log
+notedrive/npm-debug.log*
+notedrive/yarn-debug.log*
+notedrive/yarn-error.log*
+
 # Python Virtual Environment
 venv/
+.venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
 # OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Hidden files and folders
+# IDE & Hidden files
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .gemini/
+.vscode/
+.idea/
+*.swp
+*.swo
