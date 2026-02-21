@@ -1,80 +1,55 @@
 # NoteDrive Project Handoff
 
-이 문서는 NoteDrive 프로젝트의 초기 구현부터 Phase 2(모바일/PWA), Phase 3(GitHub/정리), 그리고 UI 고도화까지의 전체 상태와 기술적 세부 사항을 총망라한 통합 Handoff 문서입니다.
+최종 업데이트: 2026-02-21
 
-## 1. 프로젝트 상태 및 최근 개발 요약
+## 0) 새 세션 시작 전 필수 읽기
+- `docs/project_context.md`: 프로젝트 목표/범위/성공 기준
+- `docs/tasks.md`: 현재 우선순위와 진행 상태
+- `docs/decisions.md`: 구현/운영에 영향을 주는 ADR 결정 사항
 
-### 1.1 Mobile UI Refinement (UpNote Style)
-- **Bottom Navigation**: 단일 pane 모바일 뷰 하단에 내비게이션 바 추가 (검색 및 더보기 기능 탑재).
-- **FAB (Floating Action Button)**: 우측 하단에 파란색 원형 새 노트 작성 버튼 추가.
-- **노트 리스트 고도화**: 헤더 타이틀 중앙 정렬, 햄버거 메뉴 좌측 배치, 타이포그래피 및 간격 최적화.
-- **접근성(Accessibility)**: Radix UI `SheetContent`의 누락된 `DialogTitle` 경고를 `VisuallyHidden`으로 해결.
+## 1) 현재 상태 요약
+- 앱 핵심 기능은 1차 완성 상태입니다.
+- 3-pane UX, 폴더/노트 CRUD, 드래그 이동, 휴지통 복원/영구삭제, 태그 자동완성까지 구현되어 있습니다.
+- 실행 문서와 문서 구조(`README`, `notedrive/README`, `docs/docs_map`)는 최신 기준으로 정리되었습니다.
 
-### 1.2 Phase 2: Mobile UX & PWA
-- **반응형 패널**: 768px 미만에서 3-pane -> 단일 pane으로 자동 전환.
-- **모바일 내비게이션**: 에디터 내 '뒤로 가기' 버튼 및 뷰 전환 로직 구현.
-- **PWA 설정**: `manifest.json` 및 `next-pwa`를 통한 설치 가능 웹앱 기반 구축.
-- **에러 핸들링**: 서버 액션(`actions.ts`)의 예외 처리를 강화하여 구체적인 에러 메시지 반환.
+## 2) 이번 사이클 기준 완료 항목
+- 3-pane 레이아웃 이슈 수정(스크롤/겹침/토글 중복 제거)
+- 폴더 다중 선택, 다중 이동, 다중 색상 변경
+- 휴지통 데이터 계층(노트/폴더 soft delete + restore/permanent delete)
+- 해시태그 실시간 반영 + 자동완성 + 하이라이트
+- macOS 실행 안정화(`clean build -> start`), Windows 실행 스크립트 추가
 
-### 1.3 Phase 1 & 3: 핵심 기능 및 Cleanup
-- **핵심 UI 구현 완료**: 3-pane 노트 UI, 폴더/노트 드래그 이동, 다중 선택, 색상 변경, 휴지통(복원/영구삭제) 지원.
-- **에디터 고도화**: Tiptap 기반 Markdown 편집, 이미지/파일 첨부, 해시태그 실시간 추출/하이라이트/자동완성.
-- **구조 정리**: 레거시 코드(`legacy/`), 문서 아카이브(`docs/archive/`), 스크립트 중앙화(`scripts/`) 완료.
-- **보안/제외**: `.gitignore` 고도화로 개인 데이터 및 빌드 파일 차단.
+## 3) 현재 우선순위 (tasks 동기화)
+- `P1` 모바일 UX 고도화
+  - 목표: 갤럭시 실사용 기준으로 폴더 -> 목록 -> 에디터 흐름 최적화
+- `P1` 운영 문서 일원화
+  - 목표: 실행/설정/검증 절차를 문서만으로 재현 가능하게 정리
+- `P1` Always-on 아키텍처 설계
+  - 목표: Cloud Run + OAuth/Drive API + 비용 가드레일 문서화
 
-## 2. 아키텍처 및 구현 상세
+세부 항목은 `docs/tasks.md`를 기준으로 관리합니다.
 
-### 2.1 아키텍처 개요
-- **Frontend**: Next.js App Router + React + Tiptap
-- **Storage Abstraction**:
-  - `local` (파일시스템)
-  - `gdrive` (Google Drive API)
-- **로직 처리**: Server Actions 기반 CRUD
+## 4) 실행 기준
+- macOS: `./run_notedrive.sh` (공식 실행 진입점)
+- Windows: `.\scripts\launch_notedrive_windows.bat`
+- 접속: `http://localhost:9002`
 
-### 2.2 Dashboard / 3-pane (`dashboard.tsx`)
-- 1단/2단/3단 모드 및 Editor-only 모드.
-- 오프캔버스 사이드바 및 패널 드래그 리사이즈.
-- 태그 필터 / 컨텍스트 메뉴(노트, 폴더) 분리.
+안정 실행/스토리지 모드 설정은 `notedrive/README.md` 참고.
 
-### 2.3 Editor / Markdown (`rich-editor.tsx`, `note-editor.tsx`)
-- Tiptap 플러그인 확장 (`hashtag-extension.ts`, `globals.css`).
-- Undo/Redo 완벽 지원.
+## 5) 알려진 제한사항
+- 모바일 전용 UX는 고도화가 아직 필요합니다.
+- APK 패키징은 별도 단계(Capacitor 등)가 필요합니다.
+- Always-on 운영은 클라우드 아키텍처 설계/검증이 필요합니다.
 
-### 2.4 휴지통 (Soft Delete)
-- `lib/file-system.ts`, `lib/google-drive.ts`, `lib/storage.ts`
-- 노트/폴더 삭제 시 휴지통 이동 지원 및 복원 보장.
+## 6) 관련 문서
+- 문서 지도: `docs/docs_map.md`
+- 작업 우선순위: `docs/tasks.md`
+- 의사결정(ADR): `docs/decisions.md`
+- 변경 이력: `docs/changelog.md`
 
-## 3. 실행 및 런처 가이드
-
-### 3.1 환경 설정 (`.env.local`)
-- **Local Storage**:
-  ```bash
-  NOTEDRIVE_STORAGE_PROVIDER=local
-  NOTEDRIVE_LOCAL_ROOT=../Obsidian_Vault
-  ```
-- **Google Drive Storage**:
-  ```bash
-  NOTEDRIVE_STORAGE_PROVIDER=gdrive
-  GOOGLE_DRIVE_FOLDER_ID=...
-  GOOGLE_DRIVE_ACCESS_TOKEN=...
-  ```
-
-### 3.2 런처 실행 스크립트
-1. 루트 디렉토리에서 터미널 오픈.
-2. `./run_notedrive.sh` 실행. (Mac 환겨의 경우 `launch_notedrive_mac.sh`, `start_notedrive_daemon.mjs`으로도 안정적 동작 보장 - 포트 충돌 자동 정리 및 `next start` 방식 고정)
-3. Windows 환경일 경우 `launch_notedrive_windows.bat` 또는 `launch_notedrive_windows.ps1` 실행.
-4. 브라우저에서 `http://localhost:9002` 접속.
-
-## 4. 모바일/PWA 확인 방법
-1. **반응형 테스트**: 브라우저 개발자 도구(F12) -> Device Mode(Cmd+Shift+M)에서 모바일 해상도로 변경 (자동으로 단일 pane 패널 및 Bottom Nav가 나타남).
-2. **PWA 테스트**: 주소창 우측의 '설치' 아이콘 또는 개발자 도구의 'Application' 탭 -> 'Manifest'에서 설정값 확인 및 단독 앱으로 설치.
-
-## 5. 알려진 제한사항 및 다음 개발 목표
-- 갤럭시 화면 등 일부 모바일 환경에서의 가상 키보드 자동 포커싱 로직 개선. (현재 작업 대기 중)
-- Android APK 패키징(예: Capacitor 활용) 단계 추가 필요.
-- 맥/윈도우 간 하드 코딩된 로컬 이미지 경로 호환성 확보 문제.
-- 모바일 실기기 원격 QA 자동화는 불가하므로 사용자 피드백 의존.
-
-## 6. GitHub 정보
-- **Remote**: `https://github.com/trine1616-pixel/notedrive`
-- **Branch**: `main` (초기화 및 푸시 완료)
+## 7) Next Immediate Action
+- Antigravity에서 모바일 UX 고도화(P1)를 이어서 진행한다.
+- 시작 순서:
+  1. 모바일에서 `폴더 -> 노트목록 -> 에디터` 전환 플로우 고정
+  2. 새 노트 생성 시 포커스/가상 키보드 자동 활성화 개선
+  3. 실기기 점검 후 결과를 `docs/qa_log.md`에 기록

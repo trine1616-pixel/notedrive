@@ -15,15 +15,13 @@
 - [x] macOS 실행 안정화 (`clean build -> start` 기반)
 - [x] Windows 실행 스크립트 추가 (`scripts/launch_notedrive_windows.*`)
 - [x] 문서 구조 정리 (`README`, `notedrive/README`, `docs/docs_map`)
+- [x] 실행 경로 단일화 (`run_notedrive.sh` 공식 진입점 + 안정 런처 연결)
+- [x] QA 실행 로그 템플릿 추가 (`docs/qa_log.md`)
 
 ## 현재 작업 (Current)
 - [-] 모바일 UX 고도화 (P1)
   - 목표: 갤럭시 실사용 기준 내비게이션/편집 흐름 최적화
   - 완료 기준(DoD): 모바일에서 폴더 -> 노트목록 -> 에디터 흐름이 터치 기준으로 자연스럽게 동작
-
-- [-] 실행/운영 문서 일원화 (P1)
-  - 목표: 루트/앱 문서 간 실행 가이드 불일치 제거
-  - 완료 기준(DoD): 신규 사용자 기준 문서 한 번 읽고 실행 가능
 
 ## 다음 작업 (Next)
 - [ ] Always-on 서버 아키텍처 수립 (P1)

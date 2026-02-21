@@ -1,3 +1,9 @@
+## [2026-02-21] - 세션 마감 정리 (Codex 검수 모드 전환)
+- `docs/tasks.md`에서 문서 일원화/실행 경로 단일화 완료 상태를 반영했습니다.
+- `docs/decisions.md`에 ADR-011(개발/검수 도구 역할 분리) 결정을 추가했습니다.
+- `docs/handoff.md`에 `Next Immediate Action`을 명시해 다음 세션 시작점을 고정했습니다.
+- 최신 handoff 스냅샷을 `docs/archive/handoff_260221.md`로 갱신했습니다.
+
 ## [2026-02-21] - 문서 동기화 및 운영 가이드 정리
 - `README.md`를 현재 코드 기준으로 재작성하고 절대경로 링크를 제거했습니다.
 - `notedrive/README.md`를 한글 중심으로 보강하고 실행/설정/운영 섹션을 분리했습니다.

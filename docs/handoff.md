@@ -46,3 +46,10 @@
 - 작업 우선순위: `docs/tasks.md`
 - 의사결정(ADR): `docs/decisions.md`
 - 변경 이력: `docs/changelog.md`
+
+## 7) Next Immediate Action
+- Antigravity에서 모바일 UX 고도화(P1)를 이어서 진행한다.
+- 시작 순서:
+  1. 모바일에서 `폴더 -> 노트목록 -> 에디터` 전환 플로우 고정
+  2. 새 노트 생성 시 포커스/가상 키보드 자동 활성화 개선
+  3. 실기기 점검 후 결과를 `docs/qa_log.md`에 기록
