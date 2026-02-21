@@ -13,21 +13,28 @@ NODE_BIN="/usr/local/bin/node"
 mkdir -p "$LOG_DIR"
 
 if [ ! -d "$APP_DIR" ]; then
-  echo "App directory not found: $APP_DIR" >>"$SERVER_LOG"
   exit 1
 fi
 
 if [ ! -x "$NPM_BIN" ]; then
   NPM_BIN="$(command -v npm || true)"
 fi
-if [ ! -x "$NODE_BIN" ]; then
-  NODE_BIN="$(command -v node || true)"
-fi
-if [ -z "$NPM_BIN" ] || [ -z "$NODE_BIN" ]; then
-  echo "node/npm not found. Install Node.js first." >>"$SERVER_LOG"
+
+if [ -z "$NPM_BIN" ] || [ ! -x "$NPM_BIN" ]; then
+  echo "npm not found. Install Node.js/npm first." >>"$SERVER_LOG"
   exit 1
 fi
 
+if [ ! -x "$NODE_BIN" ]; then
+  NODE_BIN="$(command -v node || true)"
+fi
+
+if [ -z "$NODE_BIN" ] || [ ! -x "$NODE_BIN" ]; then
+  echo "node not found. Install Node.js first." >>"$SERVER_LOG"
+  exit 1
+fi
+
+# Finder/AppleScript launches can have restricted PATH.
 export PATH="$(dirname "$NODE_BIN"):$(dirname "$NPM_BIN"):/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
 is_running() {
@@ -48,29 +55,25 @@ if is_running; then
   stop_server
 fi
 
-if [ ! -d "$APP_DIR/node_modules" ]; then
-  (cd "$APP_DIR" && "$NPM_BIN" install) >>"$SERVER_LOG" 2>&1
-fi
-
-DAEMON_SCRIPT="$ROOT_DIR/start_notedrive_daemon.mjs"
-if [ ! -f "$DAEMON_SCRIPT" ]; then
-  echo "daemon script not found at $DAEMON_SCRIPT" >>"$SERVER_LOG"
-  exit 1
-fi
-
-"$NODE_BIN" "$DAEMON_SCRIPT" >>"$SERVER_LOG" 2>&1 || true
-
-for _ in $(seq 1 45); do
-  if is_running; then
-    break
-  fi
-  sleep 1
-done
-
 if ! is_running; then
-  echo "Server failed to start on :$PORT" >>"$SERVER_LOG"
-  exit 1
+  if [ ! -d "$APP_DIR/node_modules" ]; then
+    (cd "$APP_DIR" && "$NPM_BIN" install) >>"$SERVER_LOG" 2>&1 || true
+  fi
+
+  DAEMON_SCRIPT="$ROOT_DIR/start_notedrive_daemon.mjs"
+  if [ ! -f "$DAEMON_SCRIPT" ]; then
+    echo "daemon script not found at $DAEMON_SCRIPT" >>"$SERVER_LOG"
+    exit 1
+  fi
+
+  "$NODE_BIN" "$DAEMON_SCRIPT" >>"$SERVER_LOG" 2>&1 || true
+
+  for _ in $(seq 1 30); do
+    if is_running; then
+      break
+    fi
+    sleep 1
+  done
 fi
 
 open "http://localhost:$PORT"
-

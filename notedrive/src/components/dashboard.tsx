@@ -12,6 +12,13 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { NoteEditor } from '@/components/note-editor';
@@ -19,7 +26,7 @@ import { UserNav } from '@/components/user-nav';
 import { Logo } from '@/components/logo';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, HardDrive, FolderPlus, RotateCcw, Trash2 } from 'lucide-react';
+import { Search, Plus, HardDrive, FolderPlus, RotateCcw, Trash2, FolderOpen, MoreHorizontal } from 'lucide-react';
 import { DashboardProps, Note, Folder, ROOT_FOLDER_ID, TrashFolder, TrashNote } from '@/lib/types';
 import FolderTree from './folder-tree';
 import { NoteList } from './note-list';
@@ -51,6 +58,72 @@ type ContextMenuState = {
 
 const FOLDER_COLORS = ['#0ea5e9', '#22c55e', '#f97316', '#ef4444', '#a855f7', '#eab308'];
 
+function MobileBottomNav({
+  onSearchClick,
+  onCreateNote,
+  onCreateFolder,
+  onMoveNote,
+  onDeleteNote,
+  hasSelectedNote,
+}: {
+  onSearchClick: () => void;
+  onCreateNote: () => void;
+  onCreateFolder: () => void;
+  onMoveNote?: () => void;
+  onDeleteNote?: () => void;
+  hasSelectedNote: boolean;
+}) {
+  const { setOpenMobile } = useSidebar();
+
+  return (
+    <div className="flex-shrink-0 flex items-center justify-around border-t border-border/50 bg-background p-2 pb-safe">
+      <Button variant="ghost" className="flex flex-col items-center justify-center gap-1 h-auto py-2 px-6 rounded-xl hover:bg-accent/50 text-muted-foreground hover:text-foreground" onClick={() => {
+        setOpenMobile(true);
+        setTimeout(() => document.getElementById('sidebar-search-input')?.focus(), 150);
+      }}>
+        <Search className="h-[22px] w-[22px]" />
+        <span className="text-[10px] font-medium">Search</span>
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="flex flex-col items-center justify-center gap-1 h-auto py-2 px-6 rounded-xl hover:bg-accent/50 text-muted-foreground hover:text-foreground">
+            <MoreHorizontal className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-medium">More</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 mb-2 rounded-xl shadow-lg border-border/50">
+          <DropdownMenuItem onClick={onCreateNote} className="py-2.5">
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="flex-1">New Note</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onCreateFolder} className="py-2.5">
+            <FolderPlus className="h-4 w-4 mr-2" />
+            <span className="flex-1">New Folder</span>
+          </DropdownMenuItem>
+          {hasSelectedNote && (
+            <>
+              <DropdownMenuSeparator className="my-1" />
+              {onMoveNote && (
+                <DropdownMenuItem onClick={onMoveNote} className="py-2.5">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  <span className="flex-1">Move Note</span>
+                </DropdownMenuItem>
+              )}
+              {onDeleteNote && (
+                <DropdownMenuItem onClick={onDeleteNote} className="py-2.5 text-destructive focus:bg-destructive/10 focus:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  <span className="flex-1">Delete Note</span>
+                </DropdownMenuItem>
+              )}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 export function Dashboard({
   initialNotes,
   initialFolders,
@@ -79,7 +152,7 @@ export function Dashboard({
   const [isResizingPane1, setIsResizingPane1] = useState(false);
   const [isResizingPane2, setIsResizingPane2] = useState(false);
   const [activeMobileView, setActiveMobileView] = useState<'list' | 'editor'>('list');
-  const isMobile = useIsMobile();
+  const { isMobile } = useIsMobile();
   const { toast } = useToast();
   const effectivePane1Width = sidebarOpen ? pane1Width : 0;
 
@@ -481,6 +554,7 @@ export function Dashboard({
                 <div className="relative flex-grow">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="sidebar-search-input"
                     placeholder="Search all notes..."
                     className="pl-8"
                     value={searchQuery}
@@ -549,7 +623,7 @@ export function Dashboard({
         )}
 
         <SidebarInset className="relative h-full min-h-0">
-          <div className="flex h-full min-h-0 overflow-hidden">
+          <div className="flex-1 flex min-h-0 overflow-hidden">
             {!editorOnlyMode && (
               <>
                 <div
@@ -717,6 +791,32 @@ export function Dashboard({
                 </>
               )}
             </div>
+          )}
+
+          {isMobile && !editorOnlyMode && (
+            <>
+              {activeMobileView === 'list' && (
+                <Button
+                  size="icon"
+                  className="absolute bottom-20 right-5 h-[56px] w-[56px] rounded-full shadow-lg bg-sky-600 hover:bg-sky-700 text-white z-50 transition-transform active:scale-95"
+                  onClick={handleCreateNote}
+                  aria-label="New Note"
+                >
+                  <Plus className="h-6 w-6" />
+                </Button>
+              )}
+              <MobileBottomNav
+                onSearchClick={() => { }}
+                onCreateNote={handleCreateNote}
+                onCreateFolder={handleCreateFolder}
+                onMoveNote={selectedNoteId ? () => {
+                  const targetId = window.prompt('Enter target folder ID to move note (WIP interface)');
+                  if (targetId) handleMoveNote(selectedNoteId, targetId);
+                } : undefined}
+                onDeleteNote={selectedNoteId ? () => runDeleteNote(selectedNoteId) : undefined}
+                hasSelectedNote={!!selectedNoteId && activeMobileView === 'editor'}
+              />
+            </>
           )}
         </SidebarInset>
       </div>

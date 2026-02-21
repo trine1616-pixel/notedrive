@@ -1,24 +1,64 @@
 # 아키텍처 (Architecture)
 
-## 시스템 설계 원칙
-- **GitHub 중심**: 모든 상태와 문서는 Git으로 관리됨.
-- **파일 기반 컨텍스트**: `docs/` 디렉토리 내의 마크다운 파일들을 통해 컨텍스트를 유지.
-- **이식성**: OS 종속적인 기능(심볼릭 링크 등)을 배제하고 단순한 파일 구조 유지.
+최종 업데이트: 2026-02-21
 
-## 디렉토리 구조
-- `00_Inbox/`: 정돈되지 않은 새로운 노트들이 들어오는 입구
-- `docs/`: 핵심 문서 (Context, Architecture, Tasks, Decisions, Handoff, Changelog)
-- `prompts/`: LLM 호출을 위한 프롬프트 템플릿
-- `scripts/`: 실행 가능한 자동화 도구 및 런타임 스크립트
-- `skills/`: AI의 행동 지침 및 전문 지식 베이스 (PARA 분류 규칙 등)
-- `src/agents/`: 역할을 가진 에이전트 팀 (Lead, Librarian, Editor, Inspector)
-- `src/utils/`: 공용 유틸리티 (NFC 변환, 파일 핸들링 등)
-- `logs/`: 에이전트 팀의 활동 및 작업 실행 로그
-- `Obsidian_Vault/`: 최종 결과물이 담기는 지식 창고
+## 설계 원칙
+- 단일 실행 가능한 제품을 우선한다. (문서/코드/실행 경로 일치)
+- 로컬 Markdown 호환성을 유지한다. (Obsidian 상호운용)
+- 사용자 실수 복구를 우선한다. (휴지통 기반 soft delete)
+- 모바일 확장을 고려한 단계적 아키텍처를 채택한다.
 
-## 에이전트 팀 (Agent Team) 아키텍처
-Grok과 Claude의 Agent Team 개념을 벤치마킹하여 다음과 같이 역할을 분담합니다.
-1. **Lead (Archivist)**: 작업을 분해하고 각 전문가 에이전트에게 노트를 할당. 전체 진행 상황 관리.
-2. **Librarian (Classification Specialist)**: PARA 법칙(Skills)에 기반하여 노트의 최적 위치 선정.
-3. **Editor (Cleanup Specialist)**: 해시태그 정제, 이미지 경로 수정, NFC 정규화 및 마크다운 포맷팅.
-4. **Inspector (Verification Specialist)**: 최종 결과물이 분류 기준에 맞는지, 데이터 손실은 없는지 교차 검증 (환각 방지).
+## 현재 아키텍처 (As-Is)
+
+### 1) 애플리케이션 레이어
+- `notedrive/`의 Next.js 앱이 UI와 서버 액션을 함께 담당한다.
+- 핵심 UI는 3-pane 구조(폴더/노트목록/에디터)다.
+- 에디터는 Tiptap 기반이며 해시태그 실시간 인식/자동완성을 제공한다.
+
+### 2) 스토리지 레이어
+- 추상화 진입점: `notedrive/src/lib/storage.ts`
+- 구현체:
+  - 로컬 파일 시스템: `notedrive/src/lib/file-system.ts`
+  - Google Drive API: `notedrive/src/lib/google-drive.ts`
+- 선택 방식: `.env.local`의 `NOTEDRIVE_STORAGE_PROVIDER` (`local` 또는 `gdrive`)
+
+### 3) 데이터 안정성 레이어
+- 삭제는 즉시 삭제가 아닌 휴지통 이동(soft delete)으로 처리한다.
+- 복원/영구삭제는 서버 액션을 통해 수행한다.
+- 관련 액션: `notedrive/src/app/actions.ts`
+
+### 4) 실행/런타임 레이어
+- 개발 실행: `run_notedrive.sh` (dev 서버)
+- Windows 실행: `scripts/launch_notedrive_windows.bat`
+- macOS 안정 실행(보조): `scripts/runtime_backup/` 내 런처 기반 `clean build -> start`
+
+## 디렉토리 역할 (운영 기준)
+- `notedrive/`: 앱 코드 본체
+- `docs/`: 운영 문서(Tasks/Decisions/Handoff 포함)
+- `scripts/`: 실행/보조 자동화 스크립트
+- `Obsidian_Vault/`: 로컬 Markdown 저장소
+- `prompts/`, `skills/`: 에이전트 운영 리소스
+
+## 다음 아키텍처 (To-Be: Always-on)
+
+### 목표
+- PC 상시 실행 없이 모바일/데스크톱에서 상시 접근 가능한 운영 구조로 전환한다.
+
+### 제안 구조
+1. Frontend: 현재 Next.js UI 유지
+2. Backend: Cloud Run에 앱/API 배포
+3. Auth: Google OAuth 서버 처리 (토큰 보안 관리)
+4. Storage: Drive API 또는 하이브리드(local 동기화) 전략 선택
+5. Ops: 예산 알림/쿼터 가드레일로 0원 근접 운영
+
+### 전환 조건
+- 모바일 UX 고도화 완료
+- OAuth/토큰 보관 정책 확정
+- 배포 파이프라인/비용 모니터링 정책 확정
+
+## ADR 연동
+- 스토리지 기본 전략: `docs/decisions.md` ADR-005
+- 휴지통 정책: `docs/decisions.md` ADR-006
+- 태그 UX 정책: `docs/decisions.md` ADR-007
+- 모바일 UX 패턴: `docs/decisions.md` ADR-008
+- Always-on 전환 방향: `docs/decisions.md` ADR-010

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/theme-provider';
+import { ViewModeProvider } from '@/hooks/use-mobile';
 
 export const metadata: Metadata = {
   title: 'NoteDrive',
@@ -25,8 +26,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased h-svh overflow-hidden">
         <ThemeProvider>
-          {children}
-          <Toaster />
+          <ViewModeProvider>
+            {children}
+            <Toaster />
+          </ViewModeProvider>
         </ThemeProvider>
       </body>
     </html>

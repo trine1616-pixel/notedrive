@@ -3,8 +3,10 @@
 import React from 'react';
 import { Note, Folder } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { useSidebar } from '@/components/ui/sidebar';
 import { format } from 'date-fns';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, Menu } from 'lucide-react';
 
 type NoteListProps = {
   notes: Note[];
@@ -29,12 +31,15 @@ export function NoteList({
   onNoteContextMenu,
   title,
 }: NoteListProps) {
+  const { setOpenMobile, isMobile } = useSidebar();
+
   const safeDate = (value: string) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
       return '--';
     }
-    return format(date, "MMM d");
+    // Mobile format matches UpNote style: "2월 18, 오전 5:02" -> "MMM d, p"
+    return format(date, "MMM d, p");
   };
 
   const handleNoteDragStart = (event: React.DragEvent<HTMLButtonElement>, noteId: string) => {
@@ -48,10 +53,15 @@ export function NoteList({
   };
 
   return (
-    <div className="flex flex-col h-full border-r bg-muted/30 min-h-0">
-      <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
-        <h2 className="text-sm font-semibold truncate">{title}</h2>
-        <span className="text-xs text-muted-foreground">{notes.length} notes</span>
+    <div className="flex flex-col h-full bg-background min-h-0 relative">
+      <div className={cn("p-4 border-b flex items-center flex-shrink-0 bg-background sticky top-0 z-10", isMobile ? "justify-center" : "justify-between")}>
+        {isMobile && (
+          <Button variant="ghost" size="icon" className="absolute left-2 h-8 w-8 text-muted-foreground hover:bg-transparent" onClick={() => setOpenMobile(true)}>
+            <Menu className="h-6 w-6" />
+          </Button>
+        )}
+        <h2 className={cn("font-semibold truncate", isMobile ? "text-lg text-sky-600" : "text-sm")}>{title}</h2>
+        {!isMobile && <span className="text-xs text-muted-foreground">{notes.length} notes</span>}
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
         {childFolders.length > 0 && (
@@ -86,24 +96,26 @@ export function NoteList({
                 draggable
                 onDragStart={(event) => handleNoteDragStart(event, note.id)}
                 className={cn(
-                  "w-full text-left p-4 hover:bg-accent/50 transition-colors focus:bg-accent focus:outline-none cursor-grab active:cursor-grabbing",
-                  selectedNoteId === note.id && "bg-accent",
+                  "w-full text-left p-4 hover:bg-accent/30 transition-colors focus:bg-accent/50 focus:outline-none cursor-grab active:cursor-grabbing",
+                  selectedNoteId === note.id && "bg-accent/40",
                   selectedNoteIds.has(note.id) && "bg-accent/60"
                 )}
               >
-                <h3 className="text-sm font-medium truncate mb-1">{note.title}</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                  {(note.content || '').substring(0, 120).replace(/[#*_~`]/g, '')}
+                <h3 className="text-[15px] font-medium text-foreground truncate mb-1.5">{note.title}</h3>
+                <p className="text-sm text-muted-foreground truncate mb-2">
+                  {(note.content || '').substring(0, 150).replace(/[#*_~`\n]/g, ' ')}
                 </p>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] text-muted-foreground uppercase whitespace-nowrap">
-                    {safeDate(note.updatedAt)}
-                  </span>
-                  {note.hashtags.length > 0 && (
-                    <span className="text-[10px] text-primary truncate max-w-[140px]">
-                      #{note.hashtags[0]}
-                    </span>
-                  )}
+                {note.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {note.hashtags.slice(0, 3).map(tag => (
+                      <span key={tag} className="text-sm text-muted-foreground">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="text-xs text-muted-foreground/80">
+                  {safeDate(note.updatedAt)}
                 </div>
               </button>
             ))}

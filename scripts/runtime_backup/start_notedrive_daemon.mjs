@@ -69,4 +69,3 @@ const child = spawn(NODE_BIN, [NEXT_BIN, 'start', '-p', PORT], {
 
 child.unref();
 fs.writeFileSync(PID_FILE, String(child.pid), 'utf-8');
-

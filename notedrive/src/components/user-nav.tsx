@@ -16,13 +16,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Cloud, LifeBuoy, Settings, UserCircle2 } from "lucide-react";
+import { Cloud, LifeBuoy, Settings, UserCircle2, Monitor, Smartphone, Zap } from "lucide-react";
 import { useTheme } from '@/components/theme-provider';
+import { useIsMobile, ViewMode } from '@/hooks/use-mobile';
 
 export function UserNav() {
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const { mode, setMode } = useTheme();
+  const { viewMode, setViewMode } = useIsMobile();
 
   return (
     <div className="p-2 group-data-[collapsible=icon]:p-0">
@@ -92,6 +94,36 @@ export function UserNav() {
                   <Label htmlFor="theme-system">System</Label>
                 </div>
               </RadioGroup>
+            </section>
+
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold">View Environment</h3>
+              <RadioGroup value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="auto" id="view-auto" />
+                  <Label htmlFor="view-auto" className="flex items-center gap-2">
+                    <Zap className="h-3.5 w-3.5" />
+                    Auto (Responsive)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="desktop" id="view-desktop" />
+                  <Label htmlFor="view-desktop" className="flex items-center gap-2">
+                    <Monitor className="h-3.5 w-3.5" />
+                    Desktop Mode
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="mobile" id="view-mobile" />
+                  <Label htmlFor="view-mobile" className="flex items-center gap-2">
+                    <Smartphone className="h-3.5 w-3.5" />
+                    Mobile Mode
+                  </Label>
+                </div>
+              </RadioGroup>
+              <p className="text-xs text-muted-foreground mt-1">
+                Force the layout even on large/small screens. Useful for development and testing.
+              </p>
             </section>
 
             <section className="space-y-3">
