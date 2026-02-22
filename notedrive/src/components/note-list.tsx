@@ -18,6 +18,7 @@ type NoteListProps = {
   onFolderSelect: (id: string) => void;
   onNoteContextMenu: (event: React.MouseEvent, noteId: string) => void;
   title: string;
+  onBackToFolders?: () => void;
 };
 
 export function NoteList({
@@ -30,8 +31,9 @@ export function NoteList({
   onFolderSelect,
   onNoteContextMenu,
   title,
+  onBackToFolders,
 }: NoteListProps) {
-  const { setOpenMobile, isMobile } = useSidebar();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const safeDate = (value: string) => {
     const date = new Date(value);
@@ -56,7 +58,12 @@ export function NoteList({
     <div className="flex flex-col h-full bg-background min-h-0 relative">
       <div className={cn("p-4 border-b flex items-center flex-shrink-0 bg-background sticky top-0 z-10", isMobile ? "justify-center" : "justify-between")}>
         {isMobile && (
-          <Button variant="ghost" size="icon" className="absolute left-2 h-8 w-8 text-muted-foreground hover:bg-transparent" onClick={() => setOpenMobile(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-2 h-10 w-10 text-sky-600 hover:bg-sky-50 transition-colors"
+            onClick={() => setOpenMobile(true)}
+          >
             <Menu className="h-6 w-6" />
           </Button>
         )}

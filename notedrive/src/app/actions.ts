@@ -1,6 +1,8 @@
 'use server';
 
 import { summarizeNote, type SummarizeNoteInput, type SummarizeNoteOutput } from "@/ai/flows/summarize-note-flow";
+import { classifyNote, type ClassifyNoteInput, type ClassifyNoteOutput } from "@/ai/flows/classify-note-flow";
+import { organizeNote, type OrganizeNoteInput, type OrganizeNoteOutput } from "@/ai/flows/organize-note-flow";
 import {
   createFolder,
   createNote,
@@ -40,6 +42,33 @@ export async function summarizeNoteAction(input: SummarizeNoteInput): Promise<Su
   } catch (error: any) {
     console.error("Summarization failed:", error);
     return { summary: `Error: ${error.message || "Could not generate summary."}` };
+  }
+}
+
+export async function classifyNoteAction(input: ClassifyNoteInput): Promise<ClassifyNoteOutput> {
+  try {
+    const result = await classifyNote(input);
+    return result;
+  } catch (error: any) {
+    console.error("Classification failed:", error);
+    return {
+      suggestedTags: [],
+      suggestedFolder: "",
+      reason: `Error: ${error.message || "Could not classify note."}`
+    };
+  }
+}
+
+export async function organizeNoteAction(input: OrganizeNoteInput): Promise<OrganizeNoteOutput> {
+  try {
+    const result = await organizeNote(input);
+    return result;
+  } catch (error: any) {
+    console.error("Organization failed:", error);
+    return {
+      organizedContent: input.noteContent,
+      changesMade: `Error: ${error.message || "Could not organize note."}`
+    };
   }
 }
 

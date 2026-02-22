@@ -20,6 +20,8 @@
 - `docs/changelog.md`: 날짜별 변경 이력
 - `docs/device_runbook_phase2.md`: 실기기 점검 런북
 - `docs/qa_log.md`: 테스트 실행 결과 기록
+- `docs/git_workflow.md`: 브랜치/PR/머지 협업 규칙
+- `docs/security_checklist.md`: OAuth/시크릿/데이터 보호 보안 점검표
 - `docs/archive/`: 과거 문서/레거시 기록 보관
 
 ### `notedrive/` - 앱 소스 코드
@@ -44,6 +46,8 @@
 
 ### `prompts/` - 에이전트 프롬프트 템플릿
 - 세션 시작/종료 및 기능별 프롬프트 모음
+- `prompts/agents/quick_role_prompts.md`: 역할별 즉시 실행용 초단축 프롬프트
+- `prompts/agents/reference_only_template.md`: "참고 문서만 지정" 공용 템플릿
 
 ### `skills/` - 에이전트 규칙/전문 지식
 - 분류/정책/자동화 관련 스킬 문서

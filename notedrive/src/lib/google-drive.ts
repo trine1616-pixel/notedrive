@@ -1,6 +1,8 @@
 import matter from 'gray-matter';
 import { Folder, Note, ROOT_FOLDER_ID, TrashFolder, TrashNote } from './types';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 type DriveFile = {
   id: string;
   name: string;
@@ -17,6 +19,9 @@ const DRIVE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
 const MIME_FOLDER = 'application/vnd.google-apps.folder';
 const COLOR_KEY = 'notedriveColor';
 const TRASH_MARKER_KEY = 'notedriveTrash';
+
+let cachedAccessToken: string | null = null;
+let accessTokenExpiry: number = 0;
 
 function assertDriveConfig() {
   if (!DRIVE_FOLDER_ID) {
@@ -47,6 +52,11 @@ export async function getGoogleDriveAccessToken(): Promise<string> {
     return process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
   }
 
+  // 간단한 인메모리 캐시 (만료 시간은 대략적으로 50분 설정)
+  if (cachedAccessToken && Date.now() < accessTokenExpiry) {
+    return cachedAccessToken;
+  }
+
   const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
   const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
@@ -73,51 +83,134 @@ export async function getGoogleDriveAccessToken(): Promise<string> {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Failed to refresh Google Drive access token: ${errorText}`);
+    throw new Error(`Google Drive 인증 실패: ${errorText} (OAuth 정보를 확인하세요)`);
   }
 
-  const data = (await response.json()) as { access_token: string };
-  return data.access_token;
+  const data = (await response.json()) as { access_token: string; expires_in: number };
+  cachedAccessToken = data.access_token;
+  accessTokenExpiry = Date.now() + (data.expires_in - 300) * 1000; // 5분 여유
+  return cachedAccessToken;
 }
 
 async function driveFetch(pathname: string, init?: RequestInit): Promise<Response> {
-  const accessToken = await getGoogleDriveAccessToken();
-  const response = await fetch(pathname, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      ...(init?.headers || {}),
-    },
-    cache: 'no-store',
-  });
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Google Drive request failed: ${response.status} ${errorText}`);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+        console.log(`[Google Drive] Retrying attempt ${attempt} after ${delay}ms...`);
+        await sleep(delay);
+      }
+
+      const accessToken = await getGoogleDriveAccessToken();
+      const response = await fetch(pathname, {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          ...(init?.headers || {}),
+        },
+        cache: 'no-store',
+      });
+
+      if (response.ok) {
+        return response;
+      }
+
+      const errorText = await response.text();
+      const status = response.status;
+
+      // 특정 상태 코드에 대한 세부 처리
+      if (status === 401) {
+        // 토큰 만료 시 캐시 초기화 후 재시도 가능하게 함
+        cachedAccessToken = null;
+        throw new Error(`인증 만료 (401): 다시 시도합니다.`);
+      }
+
+      if (status === 403) {
+        throw new Error(`API 권한 부족 또는 할당량 초과 (403): ${errorText}`);
+      }
+
+      if (status === 429) {
+        throw new Error(`너무 많은 요청 (429): 잠시 후 다시 시도합니다.`);
+      }
+
+      throw new Error(`Google Drive request failed: ${status} ${errorText}`);
+    } catch (error: any) {
+      console.error(`[Google Drive] Attempt ${attempt} failed:`, error.message);
+      lastError = error;
+
+      // 403이나 429 같은 명확한 에러는 재시도 의미가 적을 수 있으나 
+      // 일시적인 네트워크 이슈나 401(토큰 갱신용)은 재시도 루프를 계속 돌게 함
+      if (error.message.includes('403')) break;
+    }
   }
-  return response;
+
+  throw lastError || new Error(`Google Drive request failed after ${MAX_RETRIES} retries.`);
 }
 
-async function listChildren(parentId: string): Promise<DriveFile[]> {
-  const files: DriveFile[] = [];
+async function listAllFiles(): Promise<DriveFile[]> {
+  const allFiles: DriveFile[] = [];
   let pageToken: string | undefined;
 
   do {
     const params = new URLSearchParams({
-      q: `'${parentId}' in parents and trashed=false`,
+      q: 'trashed=false',
       fields: 'nextPageToken, files(id,name,mimeType,createdTime,modifiedTime,parents,appProperties)',
-      orderBy: 'folder,name',
       pageSize: '1000',
       ...(pageToken ? { pageToken } : {}),
     });
 
     const response = await driveFetch(`${DRIVE_API_BASE}/files?${params.toString()}`);
     const data = (await response.json()) as { files: DriveFile[]; nextPageToken?: string };
-    files.push(...(data.files || []));
+    allFiles.push(...(data.files || []));
     pageToken = data.nextPageToken;
   } while (pageToken);
 
-  return files;
+  return allFiles;
+}
+
+function buildHierarchy(rootId: string, allFiles: DriveFile[]): { folders: Folder[]; fileMetas: DriveFile[] } {
+  const folders: Folder[] = [];
+  const fileMetas: DriveFile[] = [];
+  const folderMap = new Map<string, boolean>();
+  folderMap.set(rootId, true);
+
+  // 1단계: 직접적인 자식들부터 탐색하여 유효한 경로를 가진 항목만 필터링
+  // Drive scope가 drive.file인 경우 어차피 앱이 만든 파일만 보이지만, 
+  // 구조적 무결성을 위해 부모 관계를 체크합니다.
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const file of allFiles) {
+      if (file.parents?.some(p => folderMap.has(p)) && !folderMap.has(file.id)) {
+        if (file.mimeType === MIME_FOLDER) {
+          folderMap.set(file.id, true);
+          changed = true;
+        }
+      }
+    }
+  }
+
+  for (const file of allFiles) {
+    const parentId = file.parents?.[0];
+    if (parentId && folderMap.has(parentId)) {
+      if (file.mimeType === MIME_FOLDER) {
+        folders.push({
+          id: file.id,
+          name: file.name,
+          parentId: parentId === rootId ? null : parentId,
+          color: file.appProperties?.[COLOR_KEY],
+        });
+      } else if (file.name.toLowerCase().endsWith('.md') || file.mimeType === 'text/markdown') {
+        fileMetas.push(file);
+      }
+    }
+  }
+
+  return { folders, fileMetas };
 }
 
 export async function getGoogleDriveFileContent(fileId: string): Promise<string> {
@@ -134,40 +227,11 @@ export async function getGoogleDriveFileBinary(fileId: string): Promise<{ conten
   };
 }
 
-async function walkFolder(
-  parentId: string,
-  folders: Folder[],
-  files: DriveFile[],
-  parentFolderIdForUi: string
-): Promise<void> {
-  const children = await listChildren(parentId);
-  const childFolders = children.filter((item) => item.mimeType === MIME_FOLDER);
-  const childFiles = children.filter((item) => item.mimeType !== MIME_FOLDER);
-
-  for (const folder of childFolders) {
-    folders.push({
-      id: folder.id,
-      name: folder.name,
-      parentId: parentFolderIdForUi === ROOT_FOLDER_ID ? null : parentFolderIdForUi,
-      color: folder.appProperties?.[COLOR_KEY],
-    });
-    await walkFolder(folder.id, folders, files, folder.id);
-  }
-
-  for (const file of childFiles) {
-    if (!file.name.toLowerCase().endsWith('.md') && file.mimeType !== 'text/markdown') {
-      continue;
-    }
-    files.push(file);
-  }
-}
-
 export async function getGoogleDriveData(): Promise<{ notes: Note[]; folders: Folder[] }> {
   assertDriveConfig();
 
-  const folders: Folder[] = [];
-  const fileMetas: DriveFile[] = [];
-  await walkFolder(DRIVE_FOLDER_ID!, folders, fileMetas, ROOT_FOLDER_ID);
+  const allFiles = await listAllFiles();
+  const { folders, fileMetas } = buildHierarchy(DRIVE_FOLDER_ID!, allFiles);
 
   const notes = await Promise.all(
     fileMetas.map(async (file) => {
