@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 import { format } from 'date-fns';
-import { FolderOpen, Menu } from 'lucide-react';
+import { CheckCircle2, Circle, FolderOpen, Menu, PanelLeftOpen } from 'lucide-react';
 
 type NoteListProps = {
   notes: Note[];
@@ -19,6 +19,9 @@ type NoteListProps = {
   onNoteContextMenu: (event: React.MouseEvent, noteId: string) => void;
   title: string;
   onBackToFolders?: () => void;
+  isSelectionMode?: boolean;
+  emptyMessage?: string;
+  onOpenSidebar?: () => void;
 };
 
 export function NoteList({
@@ -32,6 +35,9 @@ export function NoteList({
   onNoteContextMenu,
   title,
   onBackToFolders,
+  isSelectionMode = false,
+  emptyMessage = 'No notes found.',
+  onOpenSidebar,
 }: NoteListProps) {
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -67,6 +73,17 @@ export function NoteList({
             <Menu className="h-6 w-6" />
           </Button>
         )}
+        {!isMobile && onOpenSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-2 h-8 w-8 text-muted-foreground"
+            onClick={onOpenSidebar}
+            aria-label="Open sidebar"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </Button>
+        )}
         <h2 className={cn("font-semibold truncate", isMobile ? "text-lg text-sky-600" : "text-sm")}>{title}</h2>
         {!isMobile && <span className="text-xs text-muted-foreground">{notes.length} notes</span>}
       </div>
@@ -91,7 +108,7 @@ export function NoteList({
 
         {notes.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
-            No notes found.
+            {emptyMessage}
           </div>
         ) : (
           <div className="divide-y">
@@ -108,21 +125,34 @@ export function NoteList({
                   selectedNoteIds.has(note.id) && "bg-accent/60"
                 )}
               >
-                <h3 className="text-[15px] font-medium text-foreground truncate mb-1.5">{note.title}</h3>
-                <p className="text-sm text-muted-foreground truncate mb-2">
-                  {(note.content || '').substring(0, 150).replace(/[#*_~`\n]/g, ' ')}
-                </p>
-                {note.hashtags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {note.hashtags.slice(0, 3).map(tag => (
-                      <span key={tag} className="text-sm text-muted-foreground">
-                        #{tag}
-                      </span>
-                    ))}
+                <div className="flex items-start gap-2">
+                  {isSelectionMode && (
+                    <span className="mt-0.5 text-sky-600">
+                      {selectedNoteIds.has(note.id) ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : (
+                        <Circle className="h-5 w-5" />
+                      )}
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[15px] font-medium text-foreground truncate mb-1.5">{note.title}</h3>
+                    <p className="text-sm text-muted-foreground truncate mb-2">
+                      {(note.content || '').substring(0, 150).replace(/[#*_~`\n]/g, ' ')}
+                    </p>
+                    {note.hashtags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {note.hashtags.slice(0, 3).map(tag => (
+                          <span key={tag} className="text-sm text-muted-foreground">
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="text-xs text-muted-foreground/80">
+                      {safeDate(note.updatedAt)}
+                    </div>
                   </div>
-                )}
-                <div className="text-xs text-muted-foreground/80">
-                  {safeDate(note.updatedAt)}
                 </div>
               </button>
             ))}

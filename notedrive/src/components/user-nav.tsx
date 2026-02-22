@@ -20,11 +20,24 @@ import { Cloud, LifeBuoy, Settings, UserCircle2, Monitor, Smartphone, Zap } from
 import { useTheme } from '@/components/theme-provider';
 import { useIsMobile, ViewMode } from '@/hooks/use-mobile';
 
-export function UserNav() {
+type UserNavProps = {
+  settingsOpen?: boolean;
+  onSettingsOpenChange?: (open: boolean) => void;
+};
+
+export function UserNav({ settingsOpen: controlledSettingsOpen, onSettingsOpenChange }: UserNavProps) {
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar');
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [internalSettingsOpen, setInternalSettingsOpen] = React.useState(false);
   const { mode, setMode } = useTheme();
   const { viewMode, setViewMode } = useIsMobile();
+  const settingsOpen = controlledSettingsOpen ?? internalSettingsOpen;
+
+  const setSettingsOpen = React.useCallback((next: boolean) => {
+    onSettingsOpenChange?.(next);
+    if (controlledSettingsOpen === undefined) {
+      setInternalSettingsOpen(next);
+    }
+  }, [controlledSettingsOpen, onSettingsOpenChange]);
 
   return (
     <div className="p-2 group-data-[collapsible=icon]:p-0">

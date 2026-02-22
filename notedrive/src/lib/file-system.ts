@@ -105,8 +105,17 @@ function withUniquePath(filePath: string): string {
 }
 
 function extractHashtags(fileContent: string): string[] {
-  const { data, content } = matter(fileContent);
-  let hashtags: string[] = data.tags || [];
+  let content = fileContent;
+  let hashtags: string[] = [];
+
+  try {
+    const parsed = matter(fileContent);
+    content = parsed.content;
+    hashtags = parsed.data.tags || [];
+  } catch {
+    // Keep service resilient to malformed frontmatter in user notes.
+    hashtags = [];
+  }
 
   if (typeof hashtags === 'string') {
     hashtags = [hashtags];

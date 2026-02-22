@@ -28,9 +28,16 @@ import { Logo } from '@/components/logo';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
   Search, Plus, FolderPlus, Trash2, MoreHorizontal,
-  Star, ArrowUpDown, CheckCircle2, Settings, Pencil, Link, Move, Layout,
-  HardDrive, RotateCcw, ChevronDown, FolderOpen
+  ArrowUpDown, CheckCircle2, Settings, Pencil, Link, Move, Layout,
+  HardDrive, RotateCcw, PanelLeftOpen, X
 } from 'lucide-react';
 import { DashboardProps, Note, Folder, ROOT_FOLDER_ID, TrashFolder, TrashNote } from '@/lib/types';
 import FolderTree from './folder-tree';
@@ -81,21 +88,35 @@ function FAB({ onClick }: { onClick: () => void }) {
 function MobileBottomNav({
   activeView,
   onViewChange,
-  onCreateNote,
   onCreateFolder,
+  onSearchClick,
+  onEditNotebooks,
+  onCopyLink,
   onMoveNote,
   onDeleteNote,
+  onToggleSort,
+  onToggleSelectMode,
+  onOpenSettings,
   hasSelectedNote,
+  isSelectionMode,
+  sortLabel,
 }: {
-  activeView: 'list' | 'editor' | 'favorites';
-  onViewChange: (view: 'list' | 'editor' | 'favorites') => void;
-  onCreateNote: () => void;
+  activeView: 'list' | 'editor';
+  onViewChange: (view: 'list' | 'editor') => void;
   onCreateFolder: () => void;
+  onSearchClick: () => void;
+  onEditNotebooks: () => void;
+  onCopyLink: () => void;
   onMoveNote?: () => void;
   onDeleteNote?: () => void;
+  onToggleSort: () => void;
+  onToggleSelectMode: () => void;
+  onOpenSettings: () => void;
   hasSelectedNote: boolean;
+  isSelectionMode: boolean;
+  sortLabel: string;
 }) {
-  const { setOpenMobile } = (useSidebar as any)(); // Avoiding lint issues if called in render
+  const { setOpenMobile } = useSidebar();
 
   return (
     <div className="flex-shrink-0 flex items-center justify-around border-t border-border/50 bg-background/80 backdrop-blur-md p-2 pb-safe z-50">
@@ -115,9 +136,9 @@ function MobileBottomNav({
         variant="ghost"
         className={cn(
           "flex flex-col items-center justify-center gap-1 h-auto py-2 px-4 rounded-xl transition-colors",
-          activeView === 'list' ? "text-sky-600" : "text-muted-foreground hover:text-foreground"
+          (activeView === 'list') ? "text-sky-600" : "text-muted-foreground hover:text-foreground"
         )}
-        onClick={() => onViewChange('list')}
+        onClick={onSearchClick}
       >
         <Search className="h-[22px] w-[22px]" />
         <span className="text-[10px] font-medium">Search</span>
@@ -137,42 +158,42 @@ function MobileBottomNav({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 mb-4">
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onEditNotebooks}>
             <Pencil className="mr-2 h-4 w-4" />
             <span>노트북 편집</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onCreateFolder}>
             <FolderPlus className="mr-2 h-4 w-4" />
             <span>새 노트북</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onCopyLink} disabled={!hasSelectedNote}>
             <Link className="mr-2 h-4 w-4" />
             <span>링크 복사</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onMoveNote} disabled={!hasSelectedNote}>
             <Move className="mr-2 h-4 w-4" />
             <span>다른 공간으로 이동</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { }} className="text-destructive">
+          <DropdownMenuItem onClick={onDeleteNote} disabled={!hasSelectedNote} className="text-destructive">
             <Trash2 className="mr-2 h-4 w-4" />
             <span>노트 삭제</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onToggleSort}>
             <ArrowUpDown className="mr-2 h-4 w-4" />
-            <span>노트 정렬</span>
+            <span>노트 정렬 ({sortLabel})</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onToggleSelectMode}>
             <CheckCircle2 className="mr-2 h-4 w-4" />
-            <span>노트 선택</span>
+            <span>{isSelectionMode ? '선택 모드 종료' : '노트 선택'}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onEditNotebooks}>
             <Layout className="mr-2 h-4 w-4" />
             <span>공간 전환</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { }}>
+          <DropdownMenuItem onClick={onOpenSettings}>
             <Settings className="mr-2 h-4 w-4" />
             <span>설정</span>
           </DropdownMenuItem>
@@ -215,7 +236,12 @@ export function Dashboard({
   const [pane2Width, setPane2Width] = useState(420);
   const [isResizingPane1, setIsResizingPane1] = useState(false);
   const [isResizingPane2, setIsResizingPane2] = useState(false);
-  const [activeMobileView, setActiveMobileView] = useState<'list' | 'editor' | 'favorites'>(initialNotes.length > 0 ? 'list' : 'list');
+  const [activeMobileView, setActiveMobileView] = useState<'list' | 'editor'>('list');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileSelectionMode, setMobileSelectionMode] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+  const [mobileMoveSheetOpen, setMobileMoveSheetOpen] = useState(false);
+  const [sortMode, setSortMode] = useState<'updatedDesc' | 'updatedAsc' | 'titleAsc'>('updatedDesc');
   const [isNewNote, setIsNewNote] = useState(false);
   const { isMobile } = useIsMobile();
   const { toast } = useToast();
@@ -243,6 +269,27 @@ export function Dashboard({
     }
     return map;
   }, [folders, childMap]);
+
+  const folderDepthMap = useMemo(() => {
+    const depthMap = new Map<string, number>();
+    const setDepth = (folderId: string, depth: number) => {
+      depthMap.set(folderId, depth);
+      const children = childMap.get(folderId) || [];
+      children.forEach((childId) => setDepth(childId, depth + 1));
+    };
+
+    const rootChildren = childMap.get(ROOT_FOLDER_ID) || [];
+    rootChildren.forEach((folderId) => setDepth(folderId, 0));
+    return depthMap;
+  }, [childMap]);
+
+  const selectableFolders = useMemo(() => {
+    return [...folders].sort((a, b) => {
+      const depthDiff = (folderDepthMap.get(a.id) || 0) - (folderDepthMap.get(b.id) || 0);
+      if (depthDiff !== 0) return depthDiff;
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    });
+  }, [folders, folderDepthMap]);
 
   const getFolderTotalNoteCount = (folderId: string) => {
     const descendantSet = new Set([folderId, ...(descendantsByFolder.get(folderId) || [])]);
@@ -289,6 +336,23 @@ export function Dashboard({
     return notes;
   }, [notes, selectedFolderId, selectedTag, searchQuery, descendantsByFolder, isTrashView]);
 
+  const sortedNotesByList = useMemo(() => {
+    const list = [...filteredNotesByList];
+    switch (sortMode) {
+      case 'updatedAsc':
+        list.sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+        break;
+      case 'titleAsc':
+        list.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
+        break;
+      case 'updatedDesc':
+      default:
+        list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        break;
+    }
+    return list;
+  }, [filteredNotesByList, sortMode]);
+
   const childFoldersForList = useMemo(() => {
     if (!selectedFolderId || isTrashView) return [];
     return folders.filter(folder => folder.parentId === selectedFolderId);
@@ -304,16 +368,32 @@ export function Dashboard({
     }
 
     if (!selectedNoteId || !notes.some((note) => note.id === selectedNoteId)) {
+      if (mobileSelectionMode && selectedNoteIds.size === 0) return;
       setSelectedNoteId(notes[0].id);
       setSelectedNoteIds(new Set([notes[0].id]));
     }
-  }, [notes, selectedNoteId]);
+  }, [notes, selectedNoteId, mobileSelectionMode, selectedNoteIds]);
+
+  useEffect(() => {
+    const validIds = new Set(notes.map((note) => note.id));
+    setSelectedNoteIds((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => validIds.has(id)));
+      if (next.size === prev.size) return prev;
+      return next;
+    });
+  }, [notes]);
 
   useEffect(() => {
     if (editorOnlyMode && !selectedNote) {
       setEditorOnlyMode(false);
     }
   }, [editorOnlyMode, selectedNote]);
+
+  useEffect(() => {
+    if (!mobileSelectionMode) return;
+    if (selectedNoteIds.size > 0) return;
+    setMobileSelectionMode(false);
+  }, [mobileSelectionMode, selectedNoteIds]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -453,7 +533,7 @@ export function Dashboard({
 
   const handleNoteSelect = (noteId: string, event?: React.MouseEvent) => {
     if (event && event.shiftKey && selectedNoteId) {
-      const allIds = filteredNotesByList.map(note => note.id);
+      const allIds = sortedNotesByList.map(note => note.id);
       const start = allIds.indexOf(selectedNoteId);
       const end = allIds.indexOf(noteId);
       if (start !== -1 && end !== -1) {
@@ -473,11 +553,21 @@ export function Dashboard({
       return;
     }
 
+    if (isMobile && mobileSelectionMode) {
+      const next = new Set(selectedNoteIds);
+      if (next.has(noteId)) next.delete(noteId);
+      else next.add(noteId);
+      setSelectedNoteIds(next);
+      setSelectedNoteId(next.size > 0 ? noteId : null);
+      return;
+    }
+
     setSelectedNoteId(noteId);
     setSelectedNoteIds(new Set([noteId]));
     setIsNewNote(false);
     if (isMobile) {
       setActiveMobileView('editor');
+      setMobileSearchOpen(false);
     }
   };
 
@@ -567,6 +657,155 @@ export function Dashboard({
     });
   };
 
+  const toggleSortMode = () => {
+    setSortMode((prev) => {
+      if (prev === 'updatedDesc') return 'updatedAsc';
+      if (prev === 'updatedAsc') return 'titleAsc';
+      return 'updatedDesc';
+    });
+  };
+
+  const toggleMobileSelectionMode = () => {
+    setMobileSelectionMode((prev) => {
+      if (prev) {
+        setSelectedNoteIds(selectedNoteId ? new Set([selectedNoteId]) : new Set());
+        return false;
+      }
+      if (selectedNoteId) {
+        setSelectedNoteIds(new Set([selectedNoteId]));
+      }
+      return true;
+    });
+  };
+
+  const sortLabel = sortMode === 'updatedDesc'
+    ? '최신순'
+    : sortMode === 'updatedAsc'
+      ? '오래된순'
+      : '제목순';
+
+  const currentMobileSelectionIds = useMemo(() => {
+    if (!mobileSelectionMode) {
+      return selectedNoteId ? [selectedNoteId] : [];
+    }
+    return Array.from(selectedNoteIds);
+  }, [mobileSelectionMode, selectedNoteIds, selectedNoteId]);
+
+  const handleMobileSearchClick = () => {
+    setActiveMobileView('list');
+    setMobileSearchOpen((prev) => !prev);
+    if (!mobileSearchOpen) {
+      setTimeout(() => {
+        const input = document.getElementById('mobile-list-search-input') as HTMLInputElement | null;
+        input?.focus();
+      }, 0);
+    }
+  };
+
+  const handleCopySelectedNoteLink = async () => {
+    if (!selectedNoteId) {
+      toast({ title: '선택된 노트가 없습니다.' });
+      return;
+    }
+    const link = `${window.location.origin}/?note=${selectedNoteId}`;
+    await navigator.clipboard.writeText(link);
+    toast({ title: '링크 복사됨', description: '노트 링크를 클립보드에 복사했습니다.' });
+  };
+
+  const handleMoveSelectedNote = () => {
+    if (currentMobileSelectionIds.length === 0) {
+      toast({ title: '선택된 노트가 없습니다.' });
+      return;
+    }
+    setMobileMoveSheetOpen(true);
+  };
+
+  const runMoveNotesToFolder = (targetFolderId: string) => {
+    if (currentMobileSelectionIds.length === 0) {
+      toast({ title: '선택된 노트가 없습니다.' });
+      return;
+    }
+
+    startMoveTransition(async () => {
+      let latestPayload:
+        | { notes?: Note[]; folders?: Folder[]; trashNotes?: TrashNote[]; trashFolders?: TrashFolder[]; error?: string }
+        | null = null;
+      let movedCount = 0;
+
+      for (const noteId of currentMobileSelectionIds) {
+        const result = await moveNoteAction({ noteId, targetFolderId });
+        latestPayload = result;
+        if (!result.error) movedCount += 1;
+        if (result.error) break;
+      }
+
+      if (!latestPayload || !applyDataRefresh(latestPayload, 'Could not move note.')) return;
+      setMobileMoveSheetOpen(false);
+      setMobileSelectionMode(false);
+
+      if (movedCount > 0) {
+        const nextSelected = currentMobileSelectionIds[0] || null;
+        setSelectedNoteId(nextSelected);
+        setSelectedNoteIds(nextSelected ? new Set([nextSelected]) : new Set());
+      }
+
+      const failed = movedCount !== currentMobileSelectionIds.length;
+      toast({
+        variant: failed ? 'destructive' : 'default',
+        title: failed ? '일부 노트 이동 실패' : '노트 이동 완료',
+        description: failed
+          ? `${movedCount}/${currentMobileSelectionIds.length}개 이동되었습니다.`
+          : `${movedCount}개 노트를 이동했습니다.`,
+      });
+    });
+  };
+
+  const runDeleteSelectedNotes = () => {
+    if (currentMobileSelectionIds.length === 0) {
+      toast({ title: '선택된 노트가 없습니다.' });
+      return;
+    }
+    if (!window.confirm(`선택한 ${currentMobileSelectionIds.length}개 노트를 삭제하시겠습니까?`)) return;
+
+    startMoveTransition(async () => {
+      let latestPayload:
+        | { notes?: Note[]; folders?: Folder[]; trashNotes?: TrashNote[]; trashFolders?: TrashFolder[]; error?: string }
+        | null = null;
+      let deletedCount = 0;
+
+      for (const noteId of currentMobileSelectionIds) {
+        const result = await deleteNoteAction({ noteId });
+        latestPayload = result;
+        if (!result.error) deletedCount += 1;
+        if (result.error) break;
+      }
+
+      if (!latestPayload || !applyDataRefresh(latestPayload, 'Could not delete selected notes.')) return;
+      setMobileSelectionMode(false);
+      setSelectedNoteIds(new Set());
+      setSelectedNoteId(null);
+
+      const failed = deletedCount !== currentMobileSelectionIds.length;
+      toast({
+        variant: failed ? 'destructive' : 'default',
+        title: failed ? '일부 노트 삭제 실패' : '노트 삭제 완료',
+        description: failed
+          ? `${deletedCount}/${currentMobileSelectionIds.length}개가 휴지통으로 이동되었습니다.`
+          : `${deletedCount}개 노트를 휴지통으로 이동했습니다.`,
+      });
+    });
+  };
+
+  const clearMobileSelection = () => {
+    setMobileSelectionMode(false);
+    setSelectedNoteIds(selectedNoteId ? new Set([selectedNoteId]) : new Set());
+  };
+
+  const handleMobileSettingsOpen = () => {
+    setOpenMobile(true);
+    setSettingsDialogOpen(true);
+  };
+
   const listTitle = useMemo(() => {
     if (isTrashView) return 'Trash';
     if (searchQuery) return `Search: "${searchQuery}"`;
@@ -577,6 +816,16 @@ export function Dashboard({
     }
     return 'All Notes';
   }, [searchQuery, selectedFolderId, selectedTag, folders, isTrashView]);
+
+  const listEmptyMessage = useMemo(() => {
+    if (searchQuery.trim()) {
+      return '검색 결과가 없습니다. 다른 키워드로 다시 시도해보세요.';
+    }
+    if (selectedFolderId) {
+      return '이 폴더에는 아직 노트가 없습니다.';
+    }
+    return '노트가 없습니다.';
+  }, [searchQuery, selectedFolderId]);
 
   const runRestoreTrashNote = async (trashNoteId: string) => {
     const result = await restoreTrashNoteAction({ trashNoteId });
@@ -614,7 +863,7 @@ export function Dashboard({
       onOpenChange={isMobile ? setOpenMobile : setSidebarOpen}
       style={{ ['--sidebar-width' as any]: isMobile ? 'min(320px, 85vw)' : `${pane1Width}px` }}
     >
-      <div className="h-svh w-full overflow-hidden flex min-h-0" onClick={closeContextMenu}>
+      <div className="h-svh w-full overflow-hidden flex min-h-0 relative" onClick={closeContextMenu}>
         {!editorOnlyMode && (
           <Sidebar collapsible="offcanvas" className={cn(isMobile && "border-r-0")}>
             <SidebarRail />
@@ -694,7 +943,7 @@ export function Dashboard({
               />
             </SidebarContent>
             <SidebarFooter>
-              <UserNav />
+              <UserNav settingsOpen={settingsDialogOpen} onSettingsOpenChange={setSettingsDialogOpen} />
             </SidebarFooter>
           </Sidebar>
         )}
@@ -702,8 +951,6 @@ export function Dashboard({
           <div className="flex-1 flex min-h-0 overflow-hidden">
             {!editorOnlyMode && (
               <>
-
-
                 <div
                   className={cn(
                     "flex-shrink-0 flex flex-col border-r h-full bg-muted/5 min-h-0",
@@ -711,6 +958,35 @@ export function Dashboard({
                   )}
                   style={{ width: isMobile ? '100%' : `${pane2Width}px`, maxWidth: '100%' }}
                 >
+                  {isMobile && mobileSearchOpen && !isTrashView && (
+                    <div className="p-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="mobile-list-search-input"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="노트 검색..."
+                          className="pl-9 pr-9"
+                        />
+                        {searchQuery && (
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            aria-label="검색어 지우기"
+                            onClick={() => setSearchQuery('')}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {isMobile && mobileSelectionMode && !isTrashView && (
+                    <div className="px-3 py-2 border-b text-xs text-muted-foreground bg-accent/20">
+                      선택 모드: {selectedNoteIds.size}개 선택됨
+                    </div>
+                  )}
                   {isTrashView ? (
                     <div className="flex flex-col h-full border-r bg-muted/30 min-h-0">
                       <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
@@ -765,7 +1041,7 @@ export function Dashboard({
                     </div>
                   ) : (
                     <NoteList
-                      notes={filteredNotesByList}
+                      notes={sortedNotesByList}
                       childFolders={childFoldersForList}
                       getFolderTotalNoteCount={getFolderTotalNoteCount}
                       selectedNoteId={selectedNoteId}
@@ -774,6 +1050,9 @@ export function Dashboard({
                       onFolderSelect={(id) => handleFolderSelect(id)}
                       onNoteContextMenu={handleNoteContextMenu}
                       title={listTitle}
+                      isSelectionMode={isMobile && mobileSelectionMode}
+                      emptyMessage={listEmptyMessage}
+                      onOpenSidebar={!isMobile && !sidebarOpen ? () => setSidebarOpen(true) : undefined}
                       onBackToFolders={() => {
                         setOpenMobile(true);
                       }}
@@ -786,7 +1065,10 @@ export function Dashboard({
                       "w-1 cursor-col-resize transition-all hover:w-1.5",
                       isResizingPane2 ? "bg-sky-500 w-1.5" : "bg-border/60 hover:bg-sky-400"
                     )}
-                    onMouseDown={() => setIsResizingPane2(true)}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      setIsResizingPane2(true);
+                    }}
                   />
                 )}
               </>
@@ -800,10 +1082,10 @@ export function Dashboard({
                 {selectedNote && !isTrashView ? (
                   <motion.main
                     key={selectedNote.id}
-                    initial={isMobile ? { x: '100%' } : { opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={isMobile ? { x: '100%' } : { opacity: 0 }}
-                    transition={{ type: "spring", damping: 30, stiffness: 250 }}
+                    initial={isMobile ? { opacity: 1 } : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={isMobile ? { opacity: 1 } : { opacity: 0 }}
+                    transition={isMobile ? { duration: 0.12 } : { type: "spring", damping: 30, stiffness: 250 }}
                     className="flex-1 p-0 md:p-6 h-full flex flex-col overflow-hidden min-h-0"
                   >
                     <NoteEditor
@@ -847,6 +1129,18 @@ export function Dashboard({
             <div className="absolute bottom-4 right-4 text-xs rounded bg-sky-600 text-white px-3 py-1.5 shadow z-50">
               Moving...
             </div>
+          )}
+
+          {!isMobile && !editorOnlyMode && !sidebarOpen && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-40 rounded-full shadow-md border"
+              aria-label="Open sidebar"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
           )}
 
           {contextMenu && (
@@ -893,24 +1187,108 @@ export function Dashboard({
             </div>
           )}
 
+          {isMobile && mobileSelectionMode && activeMobileView !== 'editor' && !isTrashView && (
+            <div className="absolute bottom-20 left-0 right-0 z-50 px-3">
+              <div className="rounded-xl border bg-background/95 backdrop-blur px-3 py-2 shadow-md">
+                <div className="text-xs text-muted-foreground mb-2">
+                  선택됨 {selectedNoteIds.size}개
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button size="sm" variant="outline" onClick={handleMoveSelectedNote} disabled={selectedNoteIds.size === 0 || isMoving}>
+                    <Move className="h-3.5 w-3.5 mr-1.5" />
+                    이동
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={runDeleteSelectedNotes} disabled={selectedNoteIds.size === 0 || isMoving}>
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    삭제
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={clearMobileSelection}>
+                    선택 해제
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <Sheet open={mobileMoveSheetOpen} onOpenChange={setMobileMoveSheetOpen}>
+            <SheetContent side="bottom" className="max-h-[70vh] rounded-t-2xl p-4">
+              <SheetHeader className="mb-2 text-left">
+                <SheetTitle>이동할 폴더 선택</SheetTitle>
+                <SheetDescription>
+                  {currentMobileSelectionIds.length}개 노트를 이동할 대상을 선택하세요.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="overflow-y-auto max-h-[52vh] border rounded-lg">
+                <button
+                  type="button"
+                  className="w-full text-left px-3 py-2 border-b hover:bg-accent/40 transition-colors"
+                  onClick={() => runMoveNotesToFolder(ROOT_FOLDER_ID)}
+                >
+                  <div className="text-sm font-medium truncate">All Notes (루트)</div>
+                  <div className="text-xs text-muted-foreground">{notes.length} notes</div>
+                </button>
+                {selectableFolders.map((folder) => {
+                  const depth = folderDepthMap.get(folder.id) || 0;
+                  return (
+                    <button
+                      key={folder.id}
+                      type="button"
+                      className="w-full text-left px-3 py-2 border-b last:border-b-0 hover:bg-accent/40 transition-colors"
+                      style={{ paddingLeft: `${12 + depth * 16}px` }}
+                      onClick={() => runMoveNotesToFolder(folder.id)}
+                    >
+                      <div className="text-sm font-medium truncate">{folder.name}</div>
+                      <div className="text-xs text-muted-foreground">{getFolderTotalNoteCount(folder.id)} notes</div>
+                    </button>
+                  );
+                })}
+                {selectableFolders.length === 0 && (
+                  <div className="p-4 text-sm text-muted-foreground text-center">이동 가능한 폴더가 없습니다.</div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+
           {isMobile && !editorOnlyMode && activeMobileView !== 'editor' && (
             <MobileBottomNav
               activeView={activeMobileView}
-              onViewChange={setActiveMobileView}
-              onCreateNote={handleCreateNote}
+              onViewChange={(view) => {
+                setActiveMobileView(view);
+                if (view === 'editor') setMobileSearchOpen(false);
+              }}
               onCreateFolder={handleCreateFolder}
-              onMoveNote={selectedNoteId ? () => {
-                const targetId = window.prompt('Enter target folder ID to move note (WIP interface)');
-                if (targetId) handleMoveNote(selectedNoteId, targetId);
-              } : undefined}
-              onDeleteNote={selectedNoteId ? () => runDeleteNote(selectedNoteId) : undefined}
-              hasSelectedNote={!!selectedNoteId}
+              onSearchClick={handleMobileSearchClick}
+              onEditNotebooks={() => setOpenMobile(true)}
+              onCopyLink={handleCopySelectedNoteLink}
+              onMoveNote={currentMobileSelectionIds.length > 0 ? handleMoveSelectedNote : undefined}
+              onDeleteNote={currentMobileSelectionIds.length > 0 ? (mobileSelectionMode ? runDeleteSelectedNotes : () => { if (selectedNoteId) void runDeleteNote(selectedNoteId); }) : undefined}
+              onToggleSort={toggleSortMode}
+              onToggleSelectMode={toggleMobileSelectionMode}
+              onOpenSettings={handleMobileSettingsOpen}
+              hasSelectedNote={currentMobileSelectionIds.length > 0}
+              isSelectionMode={mobileSelectionMode}
+              sortLabel={sortLabel}
             />
           )}
-          {isMobile && activeMobileView === 'list' && !isTrashView && (
+          {isMobile && activeMobileView === 'list' && !isTrashView && !mobileSelectionMode && (
             <FAB onClick={handleCreateNote} />
           )}
         </SidebarInset>
+        {!isMobile && !editorOnlyMode && sidebarOpen && (
+          <div
+            className={cn(
+              "absolute inset-y-0 z-[70] cursor-col-resize transition-all",
+              isResizingPane1 ? "bg-sky-500 w-2" : "bg-border/60 hover:bg-sky-400 w-2"
+            )}
+            style={{ left: `${Math.max(240, pane1Width) - 1}px` }}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setIsResizingPane1(true);
+            }}
+            aria-label="Resize sidebar"
+          />
+        )}
       </div >
     </SidebarProvider >
   );

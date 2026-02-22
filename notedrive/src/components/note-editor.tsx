@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import type { Note } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2, Save, Maximize2, Minimize2, ChevronLeft, FolderOpen } from 'lucide-react';
+import { Sparkles, Loader2, Maximize2, Minimize2, FolderOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,7 @@ import { summarizeNoteAction, saveNoteAction } from '@/app/actions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { RichEditor } from './rich-editor';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Trash2, Share2, Info, MoreHorizontal } from 'lucide-react';
+import { Trash2, Share2, Info, MoreHorizontal, Link2 } from 'lucide-react';
 
 type NoteEditorProps = {
   note: Note;
@@ -42,9 +42,11 @@ export function NoteEditor({
   const [content, setContent] = useState(note.content);
   const [liveHashtags, setLiveHashtags] = useState<string[]>(note.hashtags || []);
   const [isAiSummarizing, startAiTransition] = useTransition();
-  const [isSaving, startSavingTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
   const [displayUpdatedAt, setDisplayUpdatedAt] = useState<string | null>(null);
+  const [lastSavedContent, setLastSavedContent] = useState(note.content);
   const { toast } = useToast();
 
   const extractHashtags = (markdown: string): string[] => {
@@ -55,24 +57,47 @@ export function NoteEditor({
   useEffect(() => {
     setContent(note.content);
     setLiveHashtags(note.hashtags || []);
+    setLastSavedContent(note.content);
     const date = new Date(note.updatedAt);
     setDisplayUpdatedAt(Number.isNaN(date.getTime()) ? '--' : format(date, "PPP p"));
   }, [note]);
 
-  const handleSave = () => {
-    startSavingTransition(async () => {
-      const result = await saveNoteAction({ noteId: note.id, content });
+  const saveContent = React.useCallback(async (nextContent: string, options?: { silent?: boolean }) => {
+    setIsSaving(true);
+    try {
+      const result = await saveNoteAction({ noteId: note.id, content: nextContent });
       if (!result.note) {
-        toast({
-          variant: 'destructive',
-          title: 'Save failed',
-          description: result.error || 'Could not save note.',
-        });
+        if (!options?.silent) {
+          toast({
+            variant: 'destructive',
+            title: 'Save failed',
+            description: result.error || 'Could not save note.',
+          });
+        }
         return;
       }
-
+      setLastSavedContent(result.note.content);
       onNoteUpdate(result.note);
-    });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [note.id, onNoteUpdate, toast]);
+
+  useEffect(() => {
+    if (content === lastSavedContent) return;
+
+    const timer = window.setTimeout(() => {
+      void saveContent(content, { silent: true });
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [content, lastSavedContent, saveContent]);
+
+  const handleDone = async () => {
+    if (content !== lastSavedContent) {
+      await saveContent(content);
+    }
+    onBack?.();
   };
 
   const handleSummarize = () => {
@@ -90,6 +115,26 @@ export function NoteEditor({
     });
   };
 
+  const handleShare = async () => {
+    const link = `${window.location.origin}/?note=${note.id}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: note.title || 'NoteDrive note',
+          text: note.title || 'NoteDrive note',
+          url: link,
+        });
+      } catch {
+        // Ignore cancel actions.
+      }
+      return;
+    }
+
+    await navigator.clipboard.writeText(link);
+    toast({ title: '링크 복사됨', description: '노트 링크를 클립보드에 복사했습니다.' });
+  };
+
   return (
     <>
       <div className="flex-1 flex flex-col min-h-0 h-full">
@@ -103,20 +148,17 @@ export function NoteEditor({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    handleSave();
-                    if (onBack) onBack();
-                  }}
+                  onClick={() => { void handleDone(); }}
                   className="p-0 h-auto text-[16px] font-medium text-sky-600 hover:bg-transparent"
                 >
                   완료
                 </Button>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground">
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground" onClick={() => { void handleShare(); }}>
                   <Share2 className="h-[22px] w-[22px]" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground">
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground" onClick={() => setShowInfo(true)}>
                   <Info className="h-[22px] w-[22px]" />
                 </Button>
                 <DropdownMenu>
@@ -154,15 +196,14 @@ export function NoteEditor({
                   {!isMobile && <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none">Last updated</span>}
                   <span className="text-[10px] font-medium text-muted-foreground truncate">{displayUpdatedAt}</span>
                 </div>
+                <span className="text-[10px] text-muted-foreground/70 ml-2">
+                  {isSaving ? '자동 저장 중...' : '자동 저장'}
+                </span>
               </div>
               <div className="flex gap-1.5 items-center">
                 <Button onClick={handleSummarize} variant="outline" size="sm" disabled={isAiSummarizing}>
                   {isAiSummarizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-amber-500" />}
                   AI Summarize
-                </Button>
-                <Button onClick={handleSave} size="sm" className="bg-sky-600 hover:bg-sky-700" disabled={isSaving}>
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Save Note
                 </Button>
                 <Button onClick={onToggleEditorOnlyMode} variant="outline" size="sm">
                   {editorOnlyMode ? <Minimize2 className="mr-2 h-4 w-4" /> : <Maximize2 className="mr-2 h-4 w-4" />}
@@ -232,6 +273,40 @@ export function NoteEditor({
           </div>
           <DialogFooter>
             <Button onClick={() => setSummary(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showInfo} onOpenChange={setShowInfo}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>노트 정보</DialogTitle>
+            <DialogDescription>현재 노트의 기본 메타데이터입니다.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">제목</span>
+              <span className="truncate text-right">{note.title || 'Untitled'}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">폴더</span>
+              <span className="truncate text-right">{folderPath || 'All Notes'}</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">해시태그</span>
+              <span>{liveHashtags.length}개</span>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">단어 수</span>
+              <span>{content.split(/\s+/).filter(Boolean).length}</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { void handleShare(); }}>
+              <Link2 className="mr-2 h-4 w-4" />
+              링크 공유
+            </Button>
+            <Button onClick={() => setShowInfo(false)}>닫기</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

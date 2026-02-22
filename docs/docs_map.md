@@ -4,10 +4,11 @@
 
 ## 먼저 읽기 (권장 순서)
 1. `docs/tasks.md` - 현재 진행 중/예정 작업
-2. `docs/handoff.md` - 최근 인수인계 상태
-3. `docs/decisions.md` - 주요 기술 의사결정(ADR)
-4. `README.md` - 루트 실행/구조 요약
-5. `notedrive/README.md` - 앱 실행/환경변수 상세
+2. `docs/implementation_plan.md` - 현재 구현 단계(Phase)별 상세 실행 계획
+3. `docs/handoff.md` - 최근 인수인계 상태
+4. `docs/decisions.md` - 주요 기술 의사결정(ADR)
+5. `README.md` - 루트 실행/구조 요약
+6. `notedrive/README.md` - 앱 실행/환경변수 상세
 
 ## 디렉토리별 역할
 
@@ -15,6 +16,8 @@
 - `docs/project_context.md`: 프로젝트 목표/가치/범위
 - `docs/architecture.md`: 시스템 구조와 설계 원칙
 - `docs/tasks.md`: 현재 작업과 향후 로드맵
+- `docs/task.md`: `docs/tasks.md` 별칭(호환용 경로)
+- `docs/implementation_plan.md`: 현재 스프린트/Phase 구현 계획과 역할별 실행 항목
 - `docs/decisions.md`: 의사결정 기록(ADR)
 - `docs/handoff.md`: 세션 간 상태 공유
 - `docs/changelog.md`: 날짜별 변경 이력
